@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use hyper::{Client, body::Buf};
+use hyper::{Client, Uri, body::Buf};
 use hyper_tls::HttpsConnector;
 use serde::{Deserialize, Serialize};
 
@@ -27,20 +27,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::builder()
     .build::<_, hyper::Body>(https);
 
-    // Parse an `http::Uri`...
-    let uri = "https://ftx.com/api/markets/BTC-PERP".parse()?;
+    let btcusd_fut = async {
+        let resp = client.get(Uri::from_static("https://ftx.com/api/markets/BTC/USD")).await?;
+        hyper::body::to_bytes(resp.into_body()).await
+    };
+    let ethusd_fut = async {
+        let resp = client.get(Uri::from_static("https://ftx.com/api/markets/ETH/USD")).await?;
+        hyper::body::to_bytes(resp.into_body()).await
+    };
+    let ethbtc_fut = async {
+        let resp = client.get(Uri::from_static("https://ftx.com/api/markets/ETH/BTC")).await?;
+        hyper::body::to_bytes(resp.into_body()).await
+    };
 
-    // Await the response...
-    let resp = client.get(uri).await?;
+    // Wait on both them at the same time:
+    let (btcusd, ethusd, ethbtc) = futures::try_join!(btcusd_fut, ethusd_fut, ethbtc_fut)?;
 
+    let btcusd_price: SingleMarket = serde_json::from_reader(btcusd.reader())?;
+    let ethusd_price: SingleMarket = serde_json::from_reader(ethusd.reader())?;
+    let ethbtc_price: SingleMarket = serde_json::from_reader(ethbtc.reader())?;
 
-    let body = hyper::body::aggregate(resp).await?;
+    println!("{:#?}", btcusd_price.result.name);
+    println!("{:#?}", ethusd_price.result.name);
+    println!("{:#?}", ethbtc_price.result.name);
 
-    let data: SingleMarket = serde_json::from_reader(body.reader())?;
-    println!("{:#?}", data);
 
     let duration = start.elapsed();
     println!("{:?}", duration);
 
-    Ok(())
+    Ok(()) 
 }
