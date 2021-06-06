@@ -33,8 +33,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         SystemTime::now().duration_since(UNIX_EPOCH)
         .expect("Time went backwards").as_millis().to_string();
 
-    let signature_payload = format!("{}{}", ts, "POST/api/orders
-    {
+    let signature_payload = format!("{}{}", ts, 
+    "POST/api/orders{
         \"market\": \"BTC/USD\", 
         \"side\": \"buy\", 
         \"type\": \"market\", 
