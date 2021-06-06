@@ -20,10 +20,8 @@ struct SingleMarket {
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let start = Instant::now();
     
-    // This is where we will setup our HTTP client requests.
     let https = HttpsConnector::new();
 
-    // Still inside `async fn main`...
     let client = Client::builder()
     .build::<_, hyper::Body>(https);
 
@@ -47,10 +45,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let ethusd_price: SingleMarket = serde_json::from_reader(ethusd.reader())?;
     let ethbtc_price: SingleMarket = serde_json::from_reader(ethbtc.reader())?;
 
-    println!("{:#?}", btcusd_price.result.name);
-    println!("{:#?}", ethusd_price.result.name);
-    println!("{:#?}", ethbtc_price.result.name);
-
+    println!("{:#?} - {:#?}", btcusd_price.result.name, btcusd_price.result.bid);
+    println!("{:#?} - {:#?}", ethusd_price.result.name, ethusd_price.result.bid);
+    println!("{:#?} - {:#?}", ethbtc_price.result.name, ethbtc_price.result.bid);
 
     let duration = start.elapsed();
     println!("{:?}", duration);
